@@ -27,6 +27,10 @@ Widget::Widget(QWidget *parent)
     for (int i = 0; i < 100; ++i) {
         m_positions.emplace_back(rnd() - 0.5, rnd() - 0.5, rnd());
     }
+
+    std::sort(m_positions.begin(), m_positions.end(), [&](auto& lhs, auto& rhs) {
+        return lhs.z() < rhs.z();
+    });
 }
 
 Widget::~Widget()
@@ -36,16 +40,16 @@ Widget::~Widget()
 void Widget::paintEvent(QPaintEvent *event)
 {
     QPainter p(this);
-    p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    //p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
     auto& image = m_widgetImages.at("CheckBox");
 
     for (auto& pos : m_positions) {
         QTransform t;
-        t.translate(width() / 2, height() / 2);
+        t.translate(width() / 2 - image.width() /  2 , height() / 2 - image.height() / 2);
 
      //   t.rotate(m_time * 5.0);
-        auto f = -400.0 / (1.0 - pos.z());
+        auto f = -200.0 / (1.0 - pos.z());
         t.translate(pos.x() * f, pos.y() * f);
 
         auto scale = pos.z() * 2;
@@ -89,7 +93,7 @@ void Widget::timerEvent(QTimerEvent *event)
 void Widget::renderWidgets()
 {
     auto checkBox = std::make_unique<QCheckBox>("CheckBox");
-    checkBox->setGeometry(0,0,200,50);
+    checkBox->setGeometry(0,0,100,20);
 
     m_widgetImages["CheckBox"] = renderWidget(checkBox.get());
 }
