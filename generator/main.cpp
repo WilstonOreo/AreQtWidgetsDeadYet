@@ -5,7 +5,7 @@
 
 struct WidgetGenerator {
 
-    void renderWidgetToFile(QString const& filename, std::function<QWidget*()> f, int steps = 1) {
+    void renderWidgetToFile(QString const& filename, std::function<QWidget*()> f) {
         std::unique_ptr<QWidget> widget(f());
 
         auto image = renderWidget(widget.get());
@@ -15,7 +15,7 @@ struct WidgetGenerator {
     QImage renderWidget(QWidget *widget) const
     {
         qreal dpr = widget->devicePixelRatioF() * 2;
-        QImage image(widget->size() * dpr, QImage::Format_ARGB32_Premultiplied);
+        QImage image(widget->minimumSizeHint() * dpr, QImage::Format_ARGB32_Premultiplied);
         image.setDevicePixelRatio(dpr);
         image.fill(0);
         QPainter p(&image);
@@ -29,9 +29,30 @@ struct WidgetGenerator {
 
 int main(int argc, char *argv[])
 {
+    QApplication app(argc, argv);
     WidgetGenerator generator;
     std::map<QString, std::function<QWidget*()>> widgets {
-        { "checkbox0", []() -> QWidget* { return new QCheckBox("Checked"); } }
+        { "checkbox0", []() -> QWidget* { return new QCheckBox("Check Me"); } },
+        { "checkbox1", []() -> QWidget* { auto* chk = new QCheckBox("Done");
+            chk->setChecked(true);
+            return chk;
+        } },
+        { "button0", []() -> QWidget* { return new QPushButton("Click Me"); } },
+        { "button1", []() -> QWidget* { auto *btn = new QToolButton; btn->setText("Tool Time"); return btn; } },
+        { "radiobutton0", []() -> QWidget* { auto* btn = new QRadioButton("Radio Gaga");
+             btn->setChecked(true);
+             return btn;
+        } },
+        { "radiobutton1", []() -> QWidget* { return new QRadioButton("Radio Gugu"); } },
+        { "spinbox0", []() -> QWidget* { auto* box = new QSpinBox; box->setMaximum(100); box->setValue(42); return box; } },
+        { "spinbox1", []() -> QWidget* { auto* box = new QDoubleSpinBox; box->setMaximum(10000); box->setValue(3.1459); box->setDecimals(4); box->setSingleStep(0.0001); return box; } },
+        { "groupbox", []() -> QWidget* { auto* grp = new QGroupBox("Group");
+             auto* layout = new QHBoxLayout;
+            layout->addWidget(new QRadioButton("Option 1"));
+            layout->addWidget(new QRadioButton("Option 2"));
+            grp->setLayout(layout);
+            return grp;
+         } },
     };
 
     for (auto& [name, ctor] : widgets) {
