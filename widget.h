@@ -14,7 +14,12 @@ public:
     ~Widget();
 
 protected:
+    void paintEvent(QPaintEvent*) override;
     void resizeEvent(QResizeEvent*) override;
 private:
+    void renderWidgets();
+
     QPushButton* m_button;
+
+    std::map<QString, QImage> m_widgetImages;
 };
