@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <QVector3D>
 
 QT_BEGIN_NAMESPACE
 class QPushButton;
@@ -25,4 +26,7 @@ private:
 
     std::map<QString, QImage> m_widgetImages;
     double m_time = 0;
+
+    std::vector<QVector3D> m_positions;
+
 };
