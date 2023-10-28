@@ -48,7 +48,6 @@ void Widget::paintEvent(QPaintEvent *event)
         QTransform t;
         t.translate(width() / 2 - image.width() /  2 , height() / 2 - image.height() / 2);
 
-     //   t.rotate(m_time * 5.0);
         auto f = -200.0 / (1.0 - pos.z());
         t.translate(pos.x() * f, pos.y() * f);
 
@@ -56,9 +55,6 @@ void Widget::paintEvent(QPaintEvent *event)
         t.scale(scale, scale);
 
         p.setTransform(t);
-//        p.setOpacity(0.1);
-
-
 
         p.drawImage(QRect(QPoint(0,0), image.size() / 2), image);
         p.resetTransform();
