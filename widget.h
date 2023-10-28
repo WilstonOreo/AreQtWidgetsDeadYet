@@ -16,10 +16,13 @@ public:
 protected:
     void paintEvent(QPaintEvent*) override;
     void resizeEvent(QResizeEvent*) override;
+    void timerEvent(QTimerEvent*) override;
 private:
     void renderWidgets();
+    QImage renderWidget(QWidget* widget);
 
     QPushButton* m_button;
 
     std::map<QString, QImage> m_widgetImages;
+    double m_time = 0;
 };
