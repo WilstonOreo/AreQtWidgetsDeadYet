@@ -3,13 +3,25 @@
 #include <QImage>
 #include <QPainter>
 
+#include "stepinterface.h"
+#include "wigglywidget.h"
+#include "analogclock.h"
+
 struct WidgetGenerator {
 
     void renderWidgetToFile(QString const& filename, std::function<QWidget*()> f) {
         std::unique_ptr<QWidget> widget(f());
 
-        auto image = renderWidget(widget.get());
-        image.save(QString("%1.png").arg(filename));
+        if (auto* stepInterface = qobject_cast<StepInterface*>(widget.get())) {
+            for (int step = 0; step < stepInterface->stepCount(); ++step) {
+                stepInterface->setStep(step);
+                auto image = renderWidget(widget.get());
+                image.save(QString("%1.%2.png").arg(filename).arg(step));
+            }
+        } else {
+            auto image = renderWidget(widget.get());
+            image.save(QString("%1.png").arg(filename));
+        }
     }
 
     QImage renderWidget(QWidget *widget) const
@@ -53,6 +65,8 @@ int main(int argc, char *argv[])
             grp->setLayout(layout);
             return grp;
          } },
+        { "wigglywidget", []() -> QWidget* { return new WigglyWidget; } },
+        { "analogclock", []() -> QWidget* { return new AnalogClock; } },
     };
 
     for (auto& [name, ctor] : widgets) {

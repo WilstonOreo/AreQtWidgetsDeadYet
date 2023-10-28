@@ -7,11 +7,16 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
+        analogclock.h
+        analogclock.cpp
+        wigglywidget.h
+        wigglywidget.cpp
 )
 
 qt_add_executable(WidgetImageGenerator
     MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        stepinterface.h
     )
 
 
