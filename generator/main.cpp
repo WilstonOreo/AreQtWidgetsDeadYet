@@ -2,6 +2,7 @@
 #include <QtWidgets>
 #include <QImage>
 #include <QPainter>
+#include <QFile>
 
 #include "analogclock.h"
 #include "stepinterface.h"
@@ -9,6 +10,19 @@
 #include "wigglywidget.h"
 
 struct WidgetGenerator {
+    WidgetGenerator(QString const& dir) : dir(dir), qrcFile(QString("%1/widgets.qrc").arg(dir)), ts(&qrcFile) {
+        if (!qrcFile.open(QFile::WriteOnly | QFile::Text)) {
+            qFatal() << "Could not open file for writing:" << qrcFile.fileName();
+        }
+
+        ts << "<!DOCTYPE RCC><RCC version=\"1.0\">\n";
+        ts << "<qresource prefix=\"/\">\n";
+    }
+
+    ~WidgetGenerator() {
+        ts << "</qresource>\n";
+        ts << "</RCC>\n";
+    }
 
     void renderWidgetToFile(QString const& filename, std::function<QWidget*()> f) {
         std::unique_ptr<QWidget> widget(f());
@@ -16,13 +30,17 @@ struct WidgetGenerator {
         if (auto* stepInterface = qobject_cast<StepInterface*>(widget.get())) {
             for (int step = 0; step < stepInterface->stepCount(); ++step) {
                 stepInterface->setStep(step);
-                auto image = renderWidget(widget.get());
-                image.save(QString("%1.%2.png").arg(filename).arg(step));
+                renderWidgetToPng(widget.get(), QString("%1/%2.%3.png").arg(dir, filename).arg(step));
             }
         } else {
-            auto image = renderWidget(widget.get());
-            image.save(QString("%1.png").arg(filename));
+            renderWidgetToPng(widget.get(), QString("%1/%2.png").arg(dir, filename));
         }
+    }
+
+    void renderWidgetToPng(QWidget* widget, QString const& filename) {
+        auto image = renderWidget(widget);
+        image.save(filename);
+        ts << QString("\t<file>%1</file>\n").arg(filename);
     }
 
     QImage renderWidget(QWidget *widget) const
@@ -40,13 +58,19 @@ struct WidgetGenerator {
         widget->render(&p, QPoint(), QRegion(), QWidget::DrawChildren);
         return image;
     }
+
+private:
+    QString dir;
+    QFile qrcFile;
+    QTextStream ts;
 };
 
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    WidgetGenerator generator;
+    WidgetGenerator generator(qEnvironmentVariable("GENERATOR_OUTPUT_DIR"));
+
     std::map<QString, std::function<QWidget*()>> widgets {
         { "checkbox0", []() -> QWidget* { return new QCheckBox("Check Me"); } },
         { "checkbox1", []() -> QWidget* { auto* chk = new QCheckBox("Done");
@@ -73,9 +97,9 @@ int main(int argc, char *argv[])
         { "analogclock", []() -> QWidget* { return new AnalogClock; } },
         { "lineedit", []() -> QWidget* { return new LineEdit; } },
         { "calendar", []() -> QWidget* { return new QCalendarWidget; } },
-        { "slider", []() -> QWidget* { return new QSlider; } },
+        { "slider", []() -> QWidget* { return new Slider; } },
         { "dial", []() -> QWidget* { return new Dial; } },
-        { "progressbar", []() -> QWidget* { return new QProgressBar; } },
+        { "progressbar", []() -> QWidget* { return new ProgressBar; } },
         { "treeview", []() -> QWidget* { return new TreeView; } },
         { "listview", []() -> QWidget* { return new ListView; } },
         { "tableview", []() -> QWidget* { return new TableView; } },

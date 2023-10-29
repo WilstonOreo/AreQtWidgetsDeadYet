@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtWidgets>
-
+#include "stepinterface.h"
 
 #include "model.h"
 
@@ -58,19 +58,49 @@ public:
     }
 };
 
-class Dial : public QDial {
+class Dial : public QDial, public StepTrait<Dial> {
     Q_OBJECT
+    Q_INTERFACES(StepInterface)
 public:
     Dial(QWidget* parent = nullptr) : QDial(parent) {
+        setMinimum(0);
+        setMaximum(9);
     }
 
     QSize minimumSizeHint() const override {
         return {96, 96};
     }
+
+    void setStep(int step) override {
+        setValue(step);
+        StepTrait<Dial>::setStep(step);
+    }
+
 };
 
-class LineEdit : public QLineEdit {
+class ProgressBar : public QProgressBar, public StepTrait<ProgressBar> {
     Q_OBJECT
+    Q_INTERFACES(StepInterface)
+public:
+    ProgressBar(QWidget* parent = nullptr) : QProgressBar(parent) {
+        setMinimum(0);
+        setMaximum(9);
+    }
+
+    QSize minimumSizeHint() const override {
+        return {120, 24};
+    }
+
+    void setStep(int step) override {
+        setValue(step);
+        StepTrait<ProgressBar>::setStep(step);
+    }
+
+};
+
+class LineEdit : public QLineEdit, public StepTrait<LineEdit, 16> {
+    Q_OBJECT
+    Q_INTERFACES(StepInterface)
 public:
     LineEdit(QWidget* parent = nullptr) : QLineEdit("Enter some text", parent) {
     }
@@ -78,5 +108,33 @@ public:
     QSize minimumSizeHint() const override {
         return {120, 24};
     }
+
+    void setStep(int step) override {
+        setText(text.first(step));
+        StepTrait<LineEdit, 16>::setStep(step);
+    }
+
+private:
+    QString text = "Enter some text";
 };
+
+class Slider : public QSlider, public StepTrait<Slider> {
+    Q_OBJECT
+    Q_INTERFACES(StepInterface)
+public:
+    Slider(QWidget* parent = nullptr) : QSlider(parent) {
+        setMinimum(0);
+        setMaximum(9);
+    }
+
+    void setStep(int step) override {
+        setValue(step);
+        StepTrait<Slider>::setStep(step);
+    }
+
+    QSize minimumSizeHint() const override {
+        return {22, 96};
+    }
+};
+
 
