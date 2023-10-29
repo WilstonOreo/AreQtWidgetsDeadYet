@@ -1,6 +1,7 @@
 #include "widget.h"
 #include "qcoreevent.h"
 
+#include <QFile>
 #include <QPushButton>
 #include <QCheckBox>
 #include <QPainter>
@@ -11,6 +12,48 @@
 qreal rnd() {
     return QRandomGenerator::global()->bounded(0, 1000) / 1000.0;
 }
+
+
+MovingWidget::MovingWidget(const QString &prefix) :
+    position(rnd() - 0.5, rnd() - 0.5, rnd())
+{
+    if (!tryLoadFrame(prefix + ".png")) {
+        for (int i = 0; i < 100; ++i) {
+            if (!tryLoadFrame(QString("%1.%2.png").arg(prefix).arg(i)))
+                break;
+        }
+    }
+}
+
+QImage const& MovingWidget::currentFrame() const
+{
+    auto idx = static_cast<size_t>(floor(anim)) % frames.size();
+    return frames.at(idx);
+}
+
+void MovingWidget::advance() {
+    position += QVector3D(0.0,0.0, 0.001);
+    if (position.z() > 1.0) {
+        qreal i;
+        position.setZ(std::modf(position.z(), &i));
+    }
+    anim += animSpeed;
+}
+
+
+bool MovingWidget::tryLoadFrame(const QString &filename)
+{
+    if (QFile::exists(filename)) {
+        QImage frame;
+        frame.load(filename);
+        frames.push_back(frame);
+        return true;
+    }
+
+    return false;
+}
+
+
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent), m_button(new QPushButton("Nope.", this))

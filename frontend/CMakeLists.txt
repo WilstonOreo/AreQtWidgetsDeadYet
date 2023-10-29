@@ -9,6 +9,7 @@ set(PROJECT_SOURCES
         main.cpp
         widget.cpp
         widget.h
+        widgets/widgets.qrc
 )
 
 qt_add_executable(AreQtWidgetsDeadYet

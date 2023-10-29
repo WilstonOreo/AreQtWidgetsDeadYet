@@ -7,6 +7,22 @@ QT_BEGIN_NAMESPACE
 class QPushButton;
 QT_END_NAMESPACE
 
+struct MovingWidget {
+    MovingWidget(QString const& prefix);
+
+    std::vector<QImage> frames;
+    double animSpeed = 1.0;
+    double anim = 0.0;
+    QVector3D position;
+
+    QImage const& currentFrame() const;
+    void advance();
+
+private:
+    bool tryLoadFrame(QString const&);
+};
+
+
 class Widget : public QWidget
 {
     Q_OBJECT
@@ -23,6 +39,7 @@ private:
     QImage renderWidget(QWidget* widget);
 
     QPushButton* m_button;
+
 
     std::map<QString, QImage> m_widgetImages;
     double m_time = 0;
