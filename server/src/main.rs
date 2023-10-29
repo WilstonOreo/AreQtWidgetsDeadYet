@@ -2,32 +2,69 @@ use axum::{
     Router,
     routing::get,
     response::{IntoResponse, Html},
-    http::{HeaderMap, Method, header},
+    http::{HeaderMap, Method, header, HeaderValue},
 };
 
+use lazy_static::lazy_static;
 use tower_http::cors::{Any, CorsLayer};
 
-use std::net::SocketAddr;
-//res.header("Cross-Origin-Embedder-Policy", "require-corp");
-//res.header("Cross-Origin-Opener-Policy", "same-origin");
+use std::{net::SocketAddr, collections::HashMap};
+
+use common_macros::hash_map;
+
+lazy_static! {
+    static ref MIMETYPES: HashMap<&'static str, &'static str> = {
+        hash_map! {
+            "html" => "text/html",
+            "ico" => "image/x-icon",
+            "png" => "image/png",
+            "jpg" => "image/jpeg",
+            "js" => "application/javascript",
+            "wasm" => "application/wasm"
+        }
+    };
+}
+
+fn header_map(filename: &'static str) -> HeaderMap<HeaderValue> {
+    let mut headers = HeaderMap::new();
+    headers.insert("Cross-Origin-Embedder-Policy", "require-corp".parse().unwrap());
+    headers.insert("Cross-Origin-Opener-Policy", "same-origin".parse().unwrap());
+    headers.insert(header::CONTENT_TYPE, MIMETYPES[&filename.split(".").last().unwrap()].parse().unwrap());
+    headers
+}
+
+macro_rules! get_static_str {
+    ($l:literal) => {
+        axum::routing::get(|| async {
+            (header_map($l), std::include_str!($l))
+        })
+    };
+}
+
+macro_rules! get_static_bytes {
+    ($l:literal) => {
+        axum::routing::get(|| async {
+            (header_map($l), std::include_bytes!($l))
+        })
+    };
+}
 
 #[tokio::main]
 async fn main() {
     let cors = CorsLayer::new()
-    // allow `GET` and `POST` when accessing the resource
-    .allow_methods([Method::GET, Method::POST])
-    // allow requests from any origin
-    .allow_origin(Any);
-
+        // allow `GET` and `POST` when accessing the resource
+        .allow_methods([Method::GET, Method::POST])
+        // allow requests from any origin
+        .allow_origin(Any);
 
     let app = Router::new()
-        .route("/", get(index))
-        .route("/favicon.ico", get(favicon))
-        .route("/qtloader.js", get(qt_loader_js))
-        .route("/AreQtWidgetsDeadYet.html", get(index))
-        .route("/AreQtWidgetsDeadYet.js", get(wasm_loader_js))
-        .route("/AreQtWidgetsDeadYet.wasm", get(wasm))
-        .route("/AreQtWidgetsDeadYet.worker.js", get(wasm_worker_js))
+        .route("/", get_static_str!("../assets/index.html"))
+        .route("/index.html", get_static_str!("../assets/index.html"))
+        .route("/favicon.ico", get_static_bytes!("../assets/favicon.ico"))
+        .route("/qtloader.js", get_static_str!("../assets/qtloader.js"))
+        .route("/AreQtWidgetsDeadYet.js", get_static_str!("../assets/AreQtWidgetsDeadYet.js"))
+        .route("/AreQtWidgetsDeadYet.wasm", get_static_bytes!("../assets/AreQtWidgetsDeadYet.wasm"))
+        .route("/AreQtWidgetsDeadYet.worker.js", get_static_str!("../assets/AreQtWidgetsDeadYet.worker.js"))
         .layer(cors)
         ;
     
@@ -41,61 +78,3 @@ async fn main() {
         .await
         .unwrap();
 }
-
-macro_rules! route_get_text {
-    () => {
-        .route("/", get(index))
-
-    };
-}
-
-
-async fn index() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert("Cross-Origin-Embedder-Policy", "require-corp".parse().unwrap());
-    headers.insert("Cross-Origin-Opener-Policy", "same-origin".parse().unwrap());
-    headers.insert(header::CONTENT_TYPE, "text/html".parse().unwrap());
-
-    (headers, std::include_str!("../assets/index.html"))
-}
-
-async fn favicon() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert(header::CONTENT_TYPE, "image/x-icon".parse().unwrap());
-    (headers, std::include_bytes!("../assets/favicon.ico"))
-}
-
-async fn qt_loader_js() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert(header::CONTENT_TYPE, "application/javascript".parse().unwrap());
-    headers.insert("Cross-Origin-Embedder-Policy", "require-corp".parse().unwrap());
-    headers.insert("Cross-Origin-Opener-Policy", "same-origin".parse().unwrap());
-    (headers, std::include_str!("../assets/qtloader.js"))
-}
-
-async fn wasm_loader_js() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert(header::CONTENT_TYPE, "application/javascript".parse().unwrap());
-    headers.insert("Cross-Origin-Embedder-Policy", "require-corp".parse().unwrap());
-    headers.insert("Cross-Origin-Opener-Policy", "same-origin".parse().unwrap());
-    (headers, std::include_str!("../assets/AreQtWidgetsDeadYet.js"))
-}
-
-async fn wasm_worker_js() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert(header::CONTENT_TYPE, "application/javascript".parse().unwrap());
-    headers.insert("Cross-Origin-Embedder-Policy", "require-corp".parse().unwrap());
-    headers.insert("Cross-Origin-Opener-Policy", "same-origin".parse().unwrap());
-    (headers, std::include_str!("../assets/AreQtWidgetsDeadYet.worker.js"))
-}
-
-async fn wasm() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert("Cross-Origin-Embedder-Policy", "require-corp".parse().unwrap());
-    headers.insert("Cross-Origin-Opener-Policy", "same-origin".parse().unwrap());
-    headers.insert(header::CONTENT_TYPE, "application/wasm".parse().unwrap());
-    (headers, std::include_bytes!("../assets/AreQtWidgetsDeadYet.wasm"))
-}
-
-
-
