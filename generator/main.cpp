@@ -3,9 +3,10 @@
 #include <QImage>
 #include <QPainter>
 
-#include "stepinterface.h"
-#include "wigglywidget.h"
 #include "analogclock.h"
+#include "stepinterface.h"
+#include "widgets.h"
+#include "wigglywidget.h"
 
 struct WidgetGenerator {
 
@@ -27,7 +28,10 @@ struct WidgetGenerator {
     QImage renderWidget(QWidget *widget) const
     {
         qreal dpr = widget->devicePixelRatioF() * 2;
-        QImage image(widget->minimumSizeHint() * dpr, QImage::Format_ARGB32_Premultiplied);
+
+        auto s = widget->minimumSizeHint();
+
+        QImage image(s * dpr, QImage::Format_ARGB32_Premultiplied);
         image.setDevicePixelRatio(dpr);
         image.fill(0);
         QPainter p(&image);
@@ -67,6 +71,14 @@ int main(int argc, char *argv[])
          } },
         { "wigglywidget", []() -> QWidget* { return new WigglyWidget; } },
         { "analogclock", []() -> QWidget* { return new AnalogClock; } },
+        { "lineedit", []() -> QWidget* { return new LineEdit; } },
+        { "calendar", []() -> QWidget* { return new QCalendarWidget; } },
+        { "slider", []() -> QWidget* { return new QSlider; } },
+        { "dial", []() -> QWidget* { return new Dial; } },
+        { "progressbar", []() -> QWidget* { return new QProgressBar; } },
+        { "treeview", []() -> QWidget* { return new TreeView; } },
+        { "listview", []() -> QWidget* { return new ListView; } },
+        { "tableview", []() -> QWidget* { return new TableView; } },
     };
 
     for (auto& [name, ctor] : widgets) {

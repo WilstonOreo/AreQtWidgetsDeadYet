@@ -9,14 +9,18 @@ set(PROJECT_SOURCES
         main.cpp
         analogclock.h
         analogclock.cpp
+        model.h
+        model.cpp
+        stepinterface.h
+        widgets.h
         wigglywidget.h
         wigglywidget.cpp
+        images.qrc
 )
 
 qt_add_executable(WidgetImageGenerator
     MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        stepinterface.h
     )
 
 

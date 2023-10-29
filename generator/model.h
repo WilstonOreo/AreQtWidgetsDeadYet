@@ -3,7 +3,7 @@
 ** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the demonstration applications of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:BSD$
 ** Commercial License Usage
@@ -48,23 +48,53 @@
 **
 ****************************************************************************/
 
-#ifndef ANALOGCLOCK_H
-#define ANALOGCLOCK_H
+#ifndef MODEL_H
+#define MODEL_H
 
-#include <QWidget>
+#include <QAbstractItemModel>
+#include <QFileIconProvider>
+#include <QIcon>
+#include <QVector>
 
-//! [0]
-class AnalogClock : public QWidget
+class Model : public QAbstractItemModel
 {
     Q_OBJECT
 
 public:
-    AnalogClock(QWidget *parent = nullptr);
-    QSize minimumSizeHint() const override { return { 200, 200 }; }
+    Model(int rows, int columns, QObject *parent = nullptr);
+    ~Model();
 
-protected:
-    void paintEvent(QPaintEvent *event) override;
+    QModelIndex index(int row, int column, const QModelIndex &parent) const override;
+    QModelIndex parent(const QModelIndex &child) const override;
+
+    int rowCount(const QModelIndex &parent) const override;
+    int columnCount(const QModelIndex &parent) const override;
+
+    QVariant data(const QModelIndex &index, int role) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+
+    bool hasChildren(const QModelIndex &parent) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+
+private:
+
+    struct Node
+    {
+        Node(Node *parent = nullptr) : parent(parent), children(nullptr) {}
+        ~Node() { delete children; }
+        Node *parent;
+        QVector<Node> *children;
+    };
+
+    Node *node(int row, Node *parent) const;
+    Node *parent(Node *child) const;
+    int row(Node *node) const;
+
+    QIcon services;
+    int rc;
+    int cc;
+    QVector<Node> *tree;
+    QFileIconProvider iconProvider;
 };
-//! [0]
 
-#endif
+#endif // MODEL_H
