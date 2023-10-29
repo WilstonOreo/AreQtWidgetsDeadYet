@@ -12,15 +12,13 @@
     <title>Are QtWidgets Dead Yet?</title>
     <style>
       /* Make the html body cover the entire (visual) viewport with no scroll bars. */
-      html, body { padding: 0; margin: 0; overflow: hidden; height: 100% }
+      html, body { padding: 0; margin: 0; overflow: hidden; height: 100%; background-color:#efefef }
       #screen { width: 100%; height: 100%; }
     </style>
   </head>
   <body onload="init()">
-    <figure style="overflow:visible;" id="qtspinner">
+    <figure style="overflow:visible" id="qtspinner">
       <center style="margin-top:1.5em; line-height:150%">
-        <img src="qtlogo.svg" width="320" height="200" style="display:block"></img>
-        <strong>Qt for WebAssembly: AreQtWidgetsDeadYet</strong>
         <div id="qtstatus"></div>
         <noscript>JavaScript is disabled. Please enable JavaScript to use this application.</noscript>
       </center>
