@@ -13,6 +13,7 @@ struct MovingWidget {
     std::vector<QImage> frames;
     double animSpeed = 1.0;
     double anim = 0.0;
+    double speed = 1.0;
     QVector3D position;
 
     QImage const& currentFrame() const;
@@ -35,15 +36,11 @@ protected:
     void resizeEvent(QResizeEvent*) override;
     void timerEvent(QTimerEvent*) override;
 private:
-    void renderWidgets();
-    QImage renderWidget(QWidget* widget);
+    void makeWidgets();
 
     QPushButton* m_button;
 
-
-    std::map<QString, QImage> m_widgetImages;
     double m_time = 0;
-
-    std::vector<QVector3D> m_positions;
+    std::vector<MovingWidget> m_movingWidgets;
 
 };

@@ -56,7 +56,7 @@
 #include "stepinterface.h"
 
 
-class WigglyWidget : public QWidget, public StepTrait<WigglyWidget, 18>
+class WigglyWidget : public QWidget, public StepTrait<WigglyWidget, 17>
 {
     Q_OBJECT
     Q_INTERFACES(StepInterface)

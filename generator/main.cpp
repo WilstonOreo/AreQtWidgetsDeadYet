@@ -16,7 +16,7 @@ struct WidgetGenerator {
         }
 
         ts << "<!DOCTYPE RCC><RCC version=\"1.0\">\n";
-        ts << "<qresource prefix=\"/\">\n";
+        ts << "<qresource prefix=\"/widgets\">\n";
     }
 
     ~WidgetGenerator() {
@@ -40,7 +40,7 @@ struct WidgetGenerator {
     void renderWidgetToPng(QWidget* widget, QString const& filename) {
         auto image = renderWidget(widget);
         image.save(filename);
-        ts << QString("\t<file>%1</file>\n").arg(filename);
+        ts << QString("\t<file>%1</file>\n").arg(QFileInfo(filename).fileName());
     }
 
     QImage renderWidget(QWidget *widget) const
@@ -77,15 +77,35 @@ int main(int argc, char *argv[])
             chk->setChecked(true);
             return chk;
         } },
+        { "checkbox2", []() -> QWidget* { return new QCheckBox("Off"); } },
+        { "checkbox3", []() -> QWidget* { auto* chk = new QCheckBox("On");
+             chk->setChecked(true);
+             return chk;
+        } },
         { "button0", []() -> QWidget* { return new QPushButton("Click Me"); } },
-        { "button1", []() -> QWidget* { auto *btn = new QToolButton; btn->setText("Tool Time"); return btn; } },
+        { "button1", []() -> QWidget* { return new QPushButton("Ok"); } },
+        { "button2", []() -> QWidget* { return new QPushButton("Cancel"); } },
+        { "button3", []() -> QWidget* { return new QPushButton("Yes"); } },
+        { "button4", []() -> QWidget* { return new QPushButton("No"); } },
+        { "button5", []() -> QWidget* { return new QPushButton("Back"); } },
+        { "button6", []() -> QWidget* { return new QPushButton("Next"); } },
+        { "button7", []() -> QWidget* { auto *btn = new QToolButton; btn->setText("Tool Time"); return btn; } },
         { "radiobutton0", []() -> QWidget* { auto* btn = new QRadioButton("Radio Gaga");
              btn->setChecked(true);
              return btn;
         } },
         { "radiobutton1", []() -> QWidget* { return new QRadioButton("Radio Gugu"); } },
+        { "radiobutton2", []() -> QWidget* { return new QRadioButton("Trolltech"); } },
+        { "radiobutton3", []() -> QWidget* { return new QRadioButton("Digia"); } },
+        { "radiobutton4", []() -> QWidget* { auto* btn = new QRadioButton("Qt Group");
+             btn->setChecked(true);
+             return btn;
+         } },
+        { "radiobutton5", []() -> QWidget* { return new QRadioButton("Nokia"); } },
         { "spinbox0", []() -> QWidget* { auto* box = new QSpinBox; box->setMaximum(100); box->setValue(42); return box; } },
         { "spinbox1", []() -> QWidget* { auto* box = new QDoubleSpinBox; box->setMaximum(10000); box->setValue(3.1459); box->setDecimals(4); box->setSingleStep(0.0001); return box; } },
+        { "spinbox2", []() -> QWidget* { auto* box = new QSpinBox; box->setMaximum(100); box->setValue(23); return box; } },
+        { "spinbox3", []() -> QWidget* { auto* box = new QDoubleSpinBox; box->setMaximum(10000); box->setValue(2.718); box->setDecimals(4); box->setSingleStep(0.0001); return box; } },
         { "groupbox", []() -> QWidget* { auto* grp = new QGroupBox("Group");
              auto* layout = new QHBoxLayout;
             layout->addWidget(new QRadioButton("Option 1"));
