@@ -1,16 +1,22 @@
 use axum::{
     Router,
-    routing::get,
-    response::{IntoResponse, Html},
-    http::{HeaderMap, Method, header, HeaderValue},
+    http::{HeaderMap, header, HeaderValue},
 };
-
 use lazy_static::lazy_static;
-use tower_http::cors::{Any, CorsLayer};
 
-use std::{net::SocketAddr, collections::HashMap};
+use std::collections::HashMap;
 
 use common_macros::hash_map;
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(author="Michael Winkelmann", version, about="AQWDY Webserver")]
+struct Arguments{
+    #[arg(short, long, default_value_t = String::from("127.0.0.1:8080"))]
+    address: String,
+}
+
+
 
 lazy_static! {
     static ref MIMETYPES: HashMap<&'static str, &'static str> = {
@@ -64,8 +70,8 @@ async fn main() {
         ;
     
     // Address that server will bind to.
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-
+    let addr = args.address.parse().unwrap();
+    
     // Use `hyper::server::Server` which is re-exported through `axum::Server` to serve the app.
     axum::Server::bind(&addr)
         // Hyper server takes a make service.
