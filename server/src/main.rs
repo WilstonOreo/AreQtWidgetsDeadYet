@@ -51,11 +51,7 @@ macro_rules! get_static_bytes {
 
 #[tokio::main]
 async fn main() {
-    let cors = CorsLayer::new()
-        // allow `GET` and `POST` when accessing the resource
-        .allow_methods([Method::GET, Method::POST])
-        // allow requests from any origin
-        .allow_origin(Any);
+    let args = Arguments::parse();
 
     let app = Router::new()
         .route("/", get_static_str!("../assets/index.html"))
@@ -65,7 +61,6 @@ async fn main() {
         .route("/AreQtWidgetsDeadYet.js", get_static_str!("../assets/AreQtWidgetsDeadYet.js"))
         .route("/AreQtWidgetsDeadYet.wasm", get_static_bytes!("../assets/AreQtWidgetsDeadYet.wasm"))
         .route("/AreQtWidgetsDeadYet.worker.js", get_static_str!("../assets/AreQtWidgetsDeadYet.worker.js"))
-        .layer(cors)
         ;
     
     // Address that server will bind to.
