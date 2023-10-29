@@ -103,7 +103,9 @@ void Widget::paintEvent(QPaintEvent *event)
         }
     } else {
         // Paint widget starfield
-        std::vector<MovingWidget*> widgets;
+        static std::vector<MovingWidget*> widgets;
+        widgets.clear();
+        widgets.reserve(m_movingWidgets.size());
         for (auto& widget : m_movingWidgets) {
             widgets.push_back(&widget);
         }
