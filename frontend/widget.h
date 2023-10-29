@@ -38,9 +38,16 @@ protected:
 private:
     void makeWidgets();
 
+    void onButtonClick();
+
     QPushButton* m_button;
 
     double m_time = 0;
+    double m_buttonHits = 0;
+    bool m_clickedOnce = false;
+
+    const double m_maxButtonHits = 5;
+
     std::vector<MovingWidget> m_movingWidgets;
 
 };

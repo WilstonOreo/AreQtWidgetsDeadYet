@@ -67,9 +67,12 @@ bool MovingWidget::tryLoadFrame(const QString &filename)
 Widget::Widget(QWidget *parent)
     : QWidget(parent), m_button(new QPushButton("Nope.", this))
 {
+    m_buttonHits = m_maxButtonHits;
+
     m_button->setFont(QFont("Arial" , 24));
     m_button->setFocus();
-    m_button->setVisible(false);
+    connect(m_button, &QPushButton::clicked, this, &Widget::onButtonClick);
+
     setGeometry(0,0, 1024, 768);
 
     for (int i = 0; i < 3; ++i)
@@ -88,33 +91,46 @@ void Widget::paintEvent(QPaintEvent *event)
     QPainter p(this);
     p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
-    std::vector<MovingWidget*> widgets;
-    for (auto& widget : m_movingWidgets) {
-        widgets.push_back(&widget);
-    }
-    std::sort(widgets.begin(), widgets.end(), [&](auto& lhs, auto& rhs) {
-        return lhs->position.z() < rhs->position.z();
-    });
+    if (m_button->isVisible()) {
+        // Paint score
+        if (m_clickedOnce) {
+            int clicks = int(m_buttonHits + 1.0);
+            QFont f;
+            f.setPixelSize(20);
+            p.setFont(f);
 
-    auto sizeFactor = width() / 400.0 * (qreal(height()) / width());
+            p.drawText(QPoint(16,36), QString("Just %1 more click%2!").arg(clicks).arg(clicks > 1 ? "s" : ""));
+        }
+    } else {
+        // Paint widget starfield
+        std::vector<MovingWidget*> widgets;
+        for (auto& widget : m_movingWidgets) {
+            widgets.push_back(&widget);
+        }
+        std::sort(widgets.begin(), widgets.end(), [&](auto& lhs, auto& rhs) {
+            return lhs->position.z() < rhs->position.z();
+        });
 
-    for (auto& movingWidget : widgets) {
-        QTransform t;
-        auto& frame = movingWidget->currentFrame();
-        auto pos = movingWidget->position;
+        auto sizeFactor = width() / 400.0 * (qreal(height()) / width());
 
-        t.translate(width() / 2 - frame.width() /  2 , height() / 2 - frame.height() / 2);
+        for (auto& movingWidget : widgets) {
+            QTransform t;
+            auto& frame = movingWidget->currentFrame();
+            auto pos = movingWidget->position;
 
-        auto f = -200.0 * sizeFactor / (1.0 - pos.z());
-        t.translate(pos.x() * f, pos.y() * f);
+            t.translate(width() / 2 - frame.width() /  2 , height() / 2 - frame.height() / 2);
 
-        auto scale = pos.z() * sizeFactor;
-        t.scale(scale, scale);
+            auto f = -200.0 * sizeFactor / (1.0 - pos.z());
+            t.translate(pos.x() * f, pos.y() * f);
 
-        p.setTransform(t);
+            auto scale = pos.z() * sizeFactor;
+            t.scale(scale, scale);
 
-        p.drawImage(QRect(QPoint(0,0), frame.size() / 2), frame);
-        p.resetTransform();
+            p.setTransform(t);
+
+            p.drawImage(QRect(QPoint(0,0), frame.size() / 2), frame);
+            p.resetTransform();
+        }
     }
 
     QWidget::paintEvent(event);
@@ -124,7 +140,9 @@ void Widget::resizeEvent(QResizeEvent *)
 {
     auto center = this->geometry().center();
     QPoint size(100, 50);
-    m_button->setGeometry(QRect(center - size, center + size));
+    if (!m_clickedOnce) {
+        m_button->setGeometry(QRect(center - size, center + size));
+    }
 }
 
 void Widget::timerEvent(QTimerEvent *event)
@@ -133,6 +151,9 @@ void Widget::timerEvent(QTimerEvent *event)
     for (auto& movingWidget : m_movingWidgets) {
         movingWidget.advance();
     }
+
+    m_buttonHits += 0.04;
+    m_buttonHits = std::min(m_buttonHits, m_maxButtonHits);
 
     update();
 }
@@ -143,7 +164,6 @@ void Widget::makeWidgets()
     QDirIterator it(":/widgets");
     while (it.hasNext()) {
         QString dir = it.next();
-        qDebug() << dir;
 
         dir.remove(WIDGET_DIR);
         if (dir.isEmpty())
@@ -158,3 +178,16 @@ void Widget::makeWidgets()
     }
 }
 
+void Widget::onButtonClick()
+{
+    m_buttonHits -= 1.0;
+    auto s = m_button->size();
+
+    m_clickedOnce = true;
+    m_button->setGeometry(QRect(QPoint(rnd() * (width() - s.width()),rnd() * (height() - s.height())), s));
+
+    if (m_buttonHits < 0.0)
+        m_button->setVisible(false);
+
+    update();
+}
