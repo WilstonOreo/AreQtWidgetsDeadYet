@@ -1,5 +1,7 @@
+// Copyright © Michael Winkelmann <michael@winkelmann.site>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 #include "widget.h"
-#include "qcoreevent.h"
 
 #include <QFile>
 #include <QPushButton>
