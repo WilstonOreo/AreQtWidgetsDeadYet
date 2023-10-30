@@ -23,10 +23,11 @@ lazy_static! {
         hash_map! {
             "html" => "text/html",
             "ico" => "image/x-icon",
-            "png" => "image/png",
             "jpg" => "image/jpeg",
             "js" => "application/javascript",
-            "wasm" => "application/wasm"
+            "png" => "image/png",
+            "ttf" => "font/ttf",
+            "wasm" => "application/wasm",
         }
     };
 }
@@ -67,6 +68,7 @@ async fn main() {
         .route("/AreQtWidgetsDeadYet.js", get_static_str!("../assets/AreQtWidgetsDeadYet.js"))
         .route("/AreQtWidgetsDeadYet.wasm", get_static_bytes!("../assets/AreQtWidgetsDeadYet.wasm"))
         .route("/AreQtWidgetsDeadYet.worker.js", get_static_str!("../assets/AreQtWidgetsDeadYet.worker.js"))
+        .route("/DIN.ttf", get_static_bytes!("../assets/DIN.ttf"))
         ;
     
     // Address that server will bind to.

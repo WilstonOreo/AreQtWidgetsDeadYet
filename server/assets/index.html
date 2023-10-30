@@ -14,6 +14,24 @@
       /* Make the html body cover the entire (visual) viewport with no scroll bars. */
       html, body { padding: 0; margin: 0; overflow: hidden; height: 100%; background-color:#efefef }
       #screen { width: 100%; height: 100%; }
+      @font-face {
+        font-family: DIN;
+        src: url(DIN.ttf);
+        font-weight: bold;
+      }
+
+      .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        font-family: 'DIN';
+        width: 100%;
+        z-index: 10;
+        padding: 12px;
+        background-color: black;
+        color: white;
+        text-align: center;
+      }
     </style>
   </head>
   <body onload="init()">
@@ -24,6 +42,11 @@
       </center>
     </figure>
     <div id="screen"></div>
+    <div class="footer">
+        &copy; 2023 ~
+        <a href="https://winkelmann.site">Made by Michael Winkelmann</a> ~ 
+        <a href="https://github.com/WilstonOreo/AreQtWidgetsDeadYet.git">Source</a>
+    </div>
 
     <script type='text/javascript'>
         let qtLoader = undefined;
