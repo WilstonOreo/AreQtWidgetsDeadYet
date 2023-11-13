@@ -77,7 +77,8 @@ async fn main() {
     
     // Address that server will bind to.
     let addr = args.address.parse().unwrap();
-    
+    println!("Serving on {:?}", addr);
+
     axum::Server::bind(&addr)
         // Hyper server takes a make service.
         .serve(app.into_make_service())
