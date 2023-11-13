@@ -49,6 +49,7 @@ struct Arguments{
 lazy_static! {
     static ref MIMETYPES: HashMap<&'static str, &'static str> = {
         hash_map! {
+            "none" => "text/plain",
             "html" => "text/html",
             "ico" => "image/x-icon",
             "jpg" => "image/jpeg",
@@ -64,7 +65,7 @@ fn header_map(filename: &'static str) -> HeaderMap<HeaderValue> {
     let mut headers = HeaderMap::new();
     headers.insert("Cross-Origin-Embedder-Policy", "require-corp".parse().unwrap());
     headers.insert("Cross-Origin-Opener-Policy", "same-origin".parse().unwrap());
-    headers.insert(header::CONTENT_TYPE, MIMETYPES[&filename.split(".").last().unwrap()].parse().unwrap());
+    headers.insert(header::CONTENT_TYPE, MIMETYPES[&filename.split(".").last().unwrap_or("none")].parse().unwrap());
     headers
 }
 
