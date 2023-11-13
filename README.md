@@ -41,5 +41,5 @@ All WASM binaries are compiled into the web server binary.
 
 ## License
 
-This program is distributed under the terms of the MIT license.
+This program is distributed under the terms of the AGPLv3 license.
 See `LICENSE.txt` for details.
