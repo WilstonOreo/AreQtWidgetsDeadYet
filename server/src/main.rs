@@ -168,7 +168,7 @@ async fn shutdown_signal(handle: axum_server::Handle) {
 }
 
 
-async fn redirect_http_to_https(ports: Ports, signal: impl Future<Output = ()>) {
+async fn redirect_http_to_https(ip: String, ports: Ports, signal: impl Future<Output = ()>) {
     fn make_https(host: String, uri: Uri, ports: Ports) -> Result<Uri, BoxError> {
         let mut parts = uri.into_parts();
 
@@ -194,7 +194,7 @@ async fn redirect_http_to_https(ports: Ports, signal: impl Future<Output = ()>) 
         }
     };
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], ports.http));
+    let addr = format!("{}:{}", ip, ports.http).parse().unwrap();
     //let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     tracing::debug!("listening on {addr}");
     hyper::Server::bind(&addr)
