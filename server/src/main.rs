@@ -4,24 +4,12 @@
 use axum::{
     Router,
     http::{HeaderMap, header, HeaderValue},
-    extract::Host,
-    handler::HandlerWithoutStateExt,
-    http::{StatusCode, Uri},
-    response::Redirect,
-    BoxError,
 };
 use lazy_static::lazy_static;
-use axum_server::tls_rustls::RustlsConfig;
-use std::{future::Future, net::SocketAddr, path::PathBuf, time::Duration};
-use tokio::signal;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use std::collections::HashMap;
 use common_macros::hash_map;
 use clap::Parser;
-
-use rustls_acme::caches::DirCache;
-use rustls_acme::AcmeConfig;
 
 #[derive(Clone, Copy)]
 struct Ports {
@@ -33,33 +21,8 @@ struct Ports {
 #[derive(Parser, Debug)]
 #[command(author="Michael Winkelmann", version, about="AQWDY Webserver")]
 struct Arguments{
-    /// Server address
-    #[arg(long, default_value_t = String::from("127.0.0.1"))]
-    ip: String,
-    /// Domains for ACME
-    #[clap(short, required = true)]
-    domains: Vec<String>,
-    /// Contact info
-    #[clap(short)]
-    email: Vec<String>,
-    /// Cache directory
-    #[clap(short)]
-    cache: Option<PathBuf>,
-
-    #[arg(long)]
-    key: String,
-    #[arg(long)]
-    cert: String,
-    #[arg(long, name = "http", default_value_t = 80)]
-    http_port: u16,
-    #[arg(long, name = "https", default_value_t = 443)]
-    https_port: u16,
-    
-    /// Use Let's Encrypt production environment
-    /// (see https://letsencrypt.org/docs/staging-environment/)
-    #[clap(long)]
-    prod: bool,
-
+    #[arg(short, long, default_value_t = String::from("127.0.0.1:8080"))]
+    address: String,
 }
 
 
@@ -105,44 +68,7 @@ macro_rules! get_static_bytes {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "axum=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
-
-
     let args = Arguments::parse();
-
-
-    let mut state = AcmeConfig::new(args.domains)
-        .contact(args.email.iter().map(|e| format!("mailto:{}", e)))
-        .cache_option(args.cache.clone().map(DirCache::new))
-        .directory_lets_encrypt(args.prod)
-        .state();
-    let acceptor = state.axum_acceptor(state.default_rustls_config());
-
-    let handle = axum_server::Handle::new();
-    let shutdown_future = shutdown_signal(handle.clone());
-
-
-    let ports = Ports {
-        http: args.http_port,
-        https: args.https_port,
-    };
-
-    // optional: spawn a second server to redirect http requests to this server
-    tokio::spawn(redirect_http_to_https(args.ip.clone(), ports, shutdown_future));
-
-    // configure certificate and private key used by https
-    let config = RustlsConfig::from_pem_file(
-        PathBuf::from(args.cert),
-        PathBuf::from(args.key),
-    )
-    .await
-    .unwrap();
 
     let app = Router::new()
         .route("/", get_static_str!("../assets/index.html"))
@@ -156,74 +82,11 @@ async fn main() {
         ;
     
     // Address that server will bind to.
-    let addr = format!("{}:{}", args.ip, args.https_port).parse().unwrap();
+    let addr = args.address.parse().unwrap();
     
-    // Use `hyper::server::Server` which is re-exported through `axum::Server` to serve the app.
-    tracing::debug!("listening on {addr}");
-    axum_server::bind(addr).acceptor(acceptor).serve(app.into_make_service()).await.unwrap();
-}
-
-async fn shutdown_signal(handle: axum_server::Handle) {
-    let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-    };
-
-    #[cfg(unix)]
-    let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("failed to install signal handler")
-            .recv()
-            .await;
-    };
-
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
-
-    tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
-    }
-
-    tracing::info!("Received termination signal shutting down");
-    handle.graceful_shutdown(Some(Duration::from_secs(10))); // 10 secs is how long docker will wait
-                                                             // to force shutdown
-}
-
-
-async fn redirect_http_to_https(ip: String, ports: Ports, signal: impl Future<Output = ()>) {
-    fn make_https(host: String, uri: Uri, ports: Ports) -> Result<Uri, BoxError> {
-        let mut parts = uri.into_parts();
-
-        parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
-
-        if parts.path_and_query.is_none() {
-            parts.path_and_query = Some("/".parse().unwrap());
-        }
-
-        let https_host = host.replace(&ports.http.to_string(), &ports.https.to_string());
-        parts.authority = Some(https_host.parse()?);
-
-        Ok(Uri::from_parts(parts)?)
-    }
-
-    let redirect = move |Host(host): Host, uri: Uri| async move {
-        match make_https(host, uri, ports) {
-            Ok(uri) => Ok(Redirect::permanent(&uri.to_string())),
-            Err(error) => {
-                tracing::warn!(%error, "failed to convert URI to HTTPS");
-                Err(StatusCode::BAD_REQUEST)
-            }
-        }
-    };
-
-    let addr = format!("{}:{}", ip, ports.http).parse().unwrap();
-    //let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    tracing::debug!("listening on {addr}");
-    hyper::Server::bind(&addr)
-        .serve(redirect.into_make_service())
-        .with_graceful_shutdown(signal)
+    axum::Server::bind(&addr)
+        // Hyper server takes a make service.
+        .serve(app.into_make_service())
         .await
         .unwrap();
 }
