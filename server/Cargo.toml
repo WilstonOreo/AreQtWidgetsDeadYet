@@ -13,3 +13,5 @@ common_macros = "0.1.1"
 clap = { version = "4.0.15", features = ["derive"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rustls-acme = { version = "0.7.7", features = ["axum"] }
+

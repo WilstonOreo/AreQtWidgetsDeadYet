@@ -17,9 +17,11 @@ use tokio::signal;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use std::collections::HashMap;
-
 use common_macros::hash_map;
 use clap::Parser;
+
+use rustls_acme::caches::DirCache;
+use rustls_acme::AcmeConfig;
 
 #[derive(Clone, Copy)]
 struct Ports {
@@ -34,14 +36,30 @@ struct Arguments{
     /// Server address
     #[arg(long, default_value_t = String::from("127.0.0.1"))]
     ip: String,
+    /// Domains for ACME
+    #[clap(short, required = true)]
+    domains: Vec<String>,
+    /// Contact info
+    #[clap(short)]
+    email: Vec<String>,
+    /// Cache directory
+    #[clap(short)]
+    cache: Option<PathBuf>,
+
     #[arg(long)]
     key: String,
     #[arg(long)]
     cert: String,
-    #[arg(long, name = "http", default_value_t = 8080)]
+    #[arg(long, name = "http", default_value_t = 80)]
     http_port: u16,
-    #[arg(long, name = "https", default_value_t = 3000)]
+    #[arg(long, name = "https", default_value_t = 443)]
     https_port: u16,
+    
+    /// Use Let's Encrypt production environment
+    /// (see https://letsencrypt.org/docs/staging-environment/)
+    #[clap(long)]
+    prod: bool,
+
 }
 
 
@@ -97,6 +115,15 @@ async fn main() {
 
 
     let args = Arguments::parse();
+
+
+    let mut state = AcmeConfig::new(args.domains)
+        .contact(args.email.iter().map(|e| format!("mailto:{}", e)))
+        .cache_option(args.cache.clone().map(DirCache::new))
+        .directory_lets_encrypt(args.prod)
+        .state();
+    let acceptor = state.axum_acceptor(state.default_rustls_config());
+
     let handle = axum_server::Handle::new();
     let shutdown_future = shutdown_signal(handle.clone());
 
@@ -107,7 +134,7 @@ async fn main() {
     };
 
     // optional: spawn a second server to redirect http requests to this server
-    tokio::spawn(redirect_http_to_https(ports, shutdown_future));
+    tokio::spawn(redirect_http_to_https(args.ip.clone(), ports, shutdown_future));
 
     // configure certificate and private key used by https
     let config = RustlsConfig::from_pem_file(
@@ -133,11 +160,7 @@ async fn main() {
     
     // Use `hyper::server::Server` which is re-exported through `axum::Server` to serve the app.
     tracing::debug!("listening on {addr}");
-    axum_server::bind_rustls(addr, config)
-        .handle(handle)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    axum_server::bind(addr).acceptor(acceptor).serve(app.into_make_service()).await.unwrap();
 }
 
 async fn shutdown_signal(handle: axum_server::Handle) {
