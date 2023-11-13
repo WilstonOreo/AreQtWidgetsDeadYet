@@ -11,12 +11,6 @@ use std::collections::HashMap;
 use common_macros::hash_map;
 use clap::Parser;
 
-#[derive(Clone, Copy)]
-struct Ports {
-    http: u16,
-    https: u16,
-}
-
 
 #[derive(Parser, Debug)]
 #[command(author="Michael Winkelmann", version, about="AQWDY Webserver")]
